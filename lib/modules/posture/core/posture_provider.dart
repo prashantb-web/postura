@@ -26,11 +26,6 @@ class PostureState {
   final ConnectionStatus connectionStatus;
   final String? deviceName;
   final String? deviceAddress;
-  final bool isSessionActive;
-  final double? baseAngle;
-  final bool isCalibrating;
-  final int calibrationCountdown;
-  final String? calibrationError;
 
   PostureState({
     this.angle = 0,
@@ -46,11 +41,6 @@ class PostureState {
     this.comparisonScore,
     this.deviceName,
     this.deviceAddress,
-    this.isSessionActive = false,
-    this.baseAngle,
-    this.isCalibrating = false,
-    this.calibrationCountdown = 0,
-    this.calibrationError,
   });
 
   PostureState copyWith({
@@ -67,13 +57,6 @@ class PostureState {
     int? comparisonScore,
     String? deviceName,
     String? deviceAddress,
-    bool? isSessionActive,
-    double? baseAngle,
-    bool? isCalibrating,
-    int? calibrationCountdown,
-    String? calibrationError,
-    bool clearBaseAngle = false,
-    bool clearCalibrationError = false,
   }) {
     return PostureState(
       angle: angle ?? this.angle,
@@ -89,33 +72,26 @@ class PostureState {
       comparisonScore: comparisonScore ?? this.comparisonScore,
       deviceName: deviceName ?? this.deviceName,
       deviceAddress: deviceAddress ?? this.deviceAddress,
-      isSessionActive: isSessionActive ?? this.isSessionActive,
-      baseAngle: clearBaseAngle ? null : (baseAngle ?? this.baseAngle),
-      isCalibrating: isCalibrating ?? this.isCalibrating,
-      calibrationCountdown: calibrationCountdown ?? this.calibrationCountdown,
-      calibrationError: clearCalibrationError ? null : (calibrationError ?? this.calibrationError),
     );
   }
 
   int get score {
-    final total = sessionSeconds; // Use total session time
+    final total = sessionSeconds;
     if (total == 0) return 100;
 
-    // Base score: percentage of time in good posture
     final double timeScore = (goodSeconds / total) * 100;
-
-    // Penalty: penalize each slouch event
     final double penalty = slouchCount * 2.0;
 
     return (timeScore - penalty).clamp(0, 100).round();
   }
-}class PostureNotifier extends StateNotifier<PostureState> {
+}
+
+class PostureNotifier extends StateNotifier<PostureState> {
   final BleService _bleService;
   final HistoryService _historyService;
   final AlertService _alertService;
   final SettingsService _settingsService;
   Timer? _sessionTimer;
-  Timer? _calibrationTimer;
   double _threshold = 15.0;
 
   final VoidCallback? onConnected;
@@ -151,18 +127,13 @@ class PostureState {
         deviceAddress: isConnected ? _bleService.connectedDeviceAddress : null,
       );
       if (isConnected) {
+        _startTimer();
         _threshold = 10.0;
         _bleService.sendThreshold(10);
         onConnected?.call();
       } else {
         _stopTimer();
-        _calibrationTimer?.cancel();
         state = state.copyWith(
-          isSessionActive: false,
-          isCalibrating: false,
-          calibrationCountdown: 0,
-          clearBaseAngle: true,
-          clearCalibrationError: true,
           slouchCount: 0,
           sessionSeconds: 0,
           goodSeconds: 0,
@@ -183,16 +154,12 @@ class PostureState {
       final parts = data.trim().split(',');
       if (parts.length >= 2) {
         final angle = double.tryParse(parts[0]) ?? 0.0;
-        double deviation = double.tryParse(parts[1]) ?? 0.0;
-        
-        if (state.isSessionActive && state.baseAngle != null) {
-          deviation = (angle - state.baseAngle!).abs();
-        }
+        final deviation = double.tryParse(parts[1]) ?? 0.0;
 
         bool currentlySlouching = deviation > _threshold;
         int newSlouchCount = state.slouchCount;
 
-        if (state.isSessionActive) {
+        if (state.isConnected) {
           if (currentlySlouching && !state.isSlouching) {
             newSlouchCount++;
             _alertService.triggerAlert();
@@ -216,57 +183,6 @@ class PostureState {
     } catch (e) {
       debugPrint("Data parsing error: $e for data: $data");
     }
-  }
-
-  Future<void> startCalibration() async {
-    if (!state.isConnected) return;
-
-    _calibrationTimer?.cancel();
-    state = state.copyWith(
-      isCalibrating: true,
-      calibrationCountdown: 3,
-      clearCalibrationError: true,
-      clearBaseAngle: true,
-    );
-
-    _calibrationTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
-      final currentCountdown = state.calibrationCountdown - 1;
-      if (currentCountdown > 0) {
-        state = state.copyWith(calibrationCountdown: currentCountdown);
-      } else {
-        _calibrationTimer?.cancel();
-        final finalAngle = state.angle;
-        final minVal = _settingsService.minAngle;
-        final maxVal = _settingsService.maxAngle;
-
-        if (finalAngle >= minVal && finalAngle <= maxVal) {
-          state = state.copyWith(
-            isCalibrating: false,
-            calibrationCountdown: 0,
-            baseAngle: finalAngle,
-            isSessionActive: true,
-            clearCalibrationError: true,
-          );
-          await _bleService.sendBaseAngle(finalAngle.toInt());
-          _startTimer();
-        } else {
-          state = state.copyWith(
-            isCalibrating: false,
-            calibrationCountdown: 0,
-            calibrationError: "Your posture angle was ${finalAngle.toStringAsFixed(1)}°. It must be between ${minVal.toStringAsFixed(0)}° and ${maxVal.toStringAsFixed(0)}° to start. Please adjust your posture and try again.",
-          );
-        }
-      }
-    });
-  }
-
-  void cancelCalibration() {
-    _calibrationTimer?.cancel();
-    state = state.copyWith(
-      isCalibrating: false,
-      calibrationCountdown: 0,
-      clearCalibrationError: true,
-    );
   }
 
   void _startTimer() {
@@ -297,8 +213,6 @@ class PostureState {
   }
 
   Future<void> stopSessionAndSave() async {
-    if (!state.isSessionActive) return;
-
     final finalState = state;
     _stopTimer();
 
@@ -315,13 +229,10 @@ class PostureState {
     }
 
     state = state.copyWith(
-      isSessionActive: false,
-      clearBaseAngle: true,
       slouchCount: 0,
       sessionSeconds: 0,
       goodSeconds: 0,
       badSeconds: 0,
-      clearCalibrationError: true,
     );
   }
 
@@ -333,9 +244,7 @@ class PostureState {
 
   Future<void> toggleConnection() async {
     if (state.isConnected) {
-      if (state.isSessionActive) {
-        await stopSessionAndSave();
-      }
+      await stopSessionAndSave();
       await _bleService.disconnect();
       state = state.copyWith(connectionStatus: ConnectionStatus.idle);
     } else {
@@ -351,6 +260,7 @@ class PostureState {
     }
   }
 }
+
 // Providers
 final bleServiceProvider = Provider((ref) => BleService());
 final alertServiceProvider = Provider((ref) {

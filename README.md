@@ -1,28 +1,44 @@
 # <img src="assets/logo.png" align="right" width="120" alt="Postura Logo" /> Postura
 
-Postura is a premium, smart posture monitoring application built with Flutter. It connects to a hardware posture-tracking device via Bluetooth Low Energy (BLE) to provide real-time spinal alignment monitoring, historical insights, and personalized habits coaching wrapped in a stunning modern UI.
+[![SemiXthon '26 Winner](https://img.shields.io/badge/SemiXthon%20'26-Winner%20🏆-FFD700?style=for-the-badge&logo=trophy&logoColor=black)](https://github.com/prashantb-web/postura)
+[![Flutter](https://img.shields.io/badge/Flutter-3.10+-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg?style=for-the-badge)](LICENSE)
+
+**Postura** is an award-winning, smart posture monitoring application built with Flutter. It pairs seamlessly with an embedded hardware posture-tracking sensor over Bluetooth Low Energy (BLE) to deliver real-time spinal alignment monitoring, dynamic calibration, slouch detection alerts, and habit coaching wrapped in a modern glassmorphic interface.
 
 ---
 
-## ✨ Features
+## 🏆 Achievements & Recognition
 
-- 🖥️ **Real-Time Dashboard**: Monitor your current sitting/standing posture angle, deviation, and dynamic posture score in real time.
-- ⚡ **Smart Calibration**: A simple calibration step when starting a session to establish your custom "good posture" baseline.
-- 📡 **BLE Connection**: Seamless Bluetooth Low Energy integration powered by `flutter_blue_plus` to receive hardware sensor data.
-- 🎨 **Premium Glassmorphic UI**: Beautiful light and dark themes using modern frosted glass designs, customized typography, vibrant teal gradients, and micro-animations.
-- 📳 **Intelligent Alerts**: Real-time alerts (vibration and visual cues) when slouching past your configured threshold is detected.
-- 📊 **History & Insights**: Track your posture scores, session durations, and slouching events over time to measure habits improvement.
-- ⚙️ **Fully Customizable Settings**: Fine-tune minimum/maximum angle boundaries, slouching thresholds, notification settings, and calibration options.
+### 🥇 Winner — SemiXthon '26 (Delhi Technological University)
+**Postura** was built and showcased as a winning hardware-software solution at **SemiXthon '26**, North India's flagship hardware hackathon organized by **Semicon DTU** in collaboration with the **Vinod Dham Center of Excellence for Semiconductor and Microelectronics** at **Delhi Technological University (DTU)**.
+
+#### 🌟 SemiXthon '26 Highlights & Impact:
+- **Track Excellence**: Built under the **Healthcare & Assistive Human-Device Interface** track, combining low-power embedded hardware with a cross-platform mobile companion.
+- **Hardware-Software Synergy**: Live prototype demonstration featuring real-time IMU sensor telemetry over BLE, sub-second latency posture angle streaming, dynamic user baseline calibration, and haptic feedback triggers.
+- **Real-World Wellness Solution**: Addressed the epidemic of postural strain and musculoskeletal disorders among desk workers, students, and professionals through continuous, non-intrusive monitoring.
+
+---
+
+## ✨ Key Features
+
+- 🖥️ **Real-Time Telemetry Dashboard**: Monitor real-time spinal inclination angles, tilt deviation, and dynamic posture health scores.
+- ⚡ **Smart Calibration**: 3-second rapid calibration workflow to establish personalized "good posture" baselines tailored to each user's anatomy.
+- 📡 **BLE Connectivity**: Robust Bluetooth Low Energy communication powered by `flutter_blue_plus` for ultra-low power consumption and high-frequency sensor streaming.
+- 🎨 **Modern Glassmorphic UI**: Sleek dark and light themes featuring frosted glass aesthetics, vibrant teal accents, fluid micro-animations, and responsive layouts.
+- 📳 **Intelligent Slouch Alerts**: Real-time multi-modal feedback (haptic vibration and visual alerts) when slouching exceeds customizable thresholds.
+- 📊 **History & Habit Analytics**: Comprehensive session logs, posture trend charts, slouch frequency analytics, and daily wellness metrics.
+- ⚙️ **Customizable Settings**: Fine-grained configuration for slouch angle thresholds, alert sensitivity, session goals, and device connection preferences.
 
 ---
 
 ## 🛠️ Architecture & Tech Stack
 
-- **Frontend Framework**: [Flutter](https://flutter.dev) (Dart)
-- **State Management**: [Riverpod](https://riverpod.dev) (for scalable, reactive state and clean dependency injection)
-- **Routing**: [GoRouter](https://pub.dev/packages/go_router) (declarative routing with shell routes for navbar navigation)
-- **Local Database**: [Hive](https://pub.dev/packages/hive) & [SharedPreferences](https://pub.dev/packages/shared_preferences) (for fast local caching of history logs and persistent user settings)
-- **Hardware Communication**: [Flutter Blue Plus](https://pub.dev/packages/flutter_blue_plus) (Bluetooth Low Energy integration)
+- **Framework**: [Flutter](https://flutter.dev) (Dart 3+)
+- **State Management**: [Riverpod](https://riverpod.dev) (reactive, testable architecture with fine-grained dependency injection)
+- **Routing**: [GoRouter](https://pub.dev/packages/go_router) (declarative shell navigation with deep linking support)
+- **Local Storage**: [Hive](https://pub.dev/packages/hive) & [SharedPreferences](https://pub.dev/packages/shared_preferences) (fast offline caching of posture metrics and settings)
+- **Hardware Communication**: [Flutter Blue Plus](https://pub.dev/packages/flutter_blue_plus) (cross-platform Bluetooth Low Energy BLE integration)
 
 ---
 
@@ -30,14 +46,14 @@ Postura is a premium, smart posture monitoring application built with Flutter. I
 
 ```text
 lib/
-├── app/                  # Application level configurations (router, shell)
-├── modules/              # Core business modules
+├── app/                  # Application routing, themes, and global initialization
+├── modules/              # Feature modules
 │   ├── posture/          # BLE services, calibration flow, & state notifier
-│   └── storage/          # Local database models (Hive) and preferences
-├── shared/               # Shared constants, design tokens, UI components, & utilities
-│   ├── components/       # Reusable templates (scaffolds) & atom UI components
-│   └── constants/        # Global colors, constants, and localized strings
-└── views/                # Screen-level presentation views (Home, History, Insights, Settings)
+│   └── storage/          # Hive local models, storage services, & preferences
+├── shared/               # Reusable design system, components, & utilities
+│   ├── components/       # Glassmorphic templates, charts, & custom widgets
+│   └── constants/        # Design tokens, color palettes, and localized strings
+└── views/                # Presentation views (Home, History, Insights, Settings)
 ```
 
 ---
@@ -46,15 +62,15 @@ lib/
 
 ### Prerequisites
 
-- Flutter SDK (v3.10.7 or later recommended)
-- Dart SDK
-- An Android or iOS device with Bluetooth capability (for BLE functions)
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (v3.10.7 or later)
+- [Dart SDK](https://dart.dev/get-dart) (included with Flutter)
+- Android or iOS device with Bluetooth Low Energy (BLE) support
 
 ### Installation
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/bhandariprince321-netizen/postura.git
+   git clone https://github.com/prashantb-web/postura.git
    cd postura
    ```
 
@@ -77,4 +93,10 @@ lib/
 
 ## 🔒 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+<p align="center">
+  Crafted with ❤️ by <a href="https://github.com/prashantb-web">Prashant Bhandari</a>
+</p>
